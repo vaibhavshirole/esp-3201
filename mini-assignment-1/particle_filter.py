@@ -96,11 +96,9 @@ def eval_sensor_model(sensor_data, particles, landmarks):
     #
     # The employed sensor model is range only.
 
-
     #sensor data ---- array of distance from each particle
     #particles ---- x, y, theta
     #landmarks ---- dict size 4 of x, y
-
 
     sigma_r = 0.2
 
@@ -115,23 +113,21 @@ def eval_sensor_model(sensor_data, particles, landmarks):
     #print(landmarks)
     
     for particle in particles:
-
         #store position of measured sensor readings for particle
-
         p_x = particle['x']
         p_y = particle['y']
         d = []
-        error = 0
-        
+
+        sum_error = 0   #add to array of weights after checking goodness of particle
         num_landmarks = len(landmarks)
+
         for i in range(num_landmarks):
-            landmark = landmarks.get(i+1)
+            landmark = landmarks.get(i+1)   # gets landmark and skips the one at index 0
             #print(landmark)
 
             #store position of the landmark
             l_x = landmark[0]
             l_y = landmark[1]
-
 
             compare_particle = [p_x, p_y]
             compare_landmark = [l_x, l_y]
@@ -141,25 +137,23 @@ def eval_sensor_model(sensor_data, particles, landmarks):
             d.append(dist)
 
             #calculate weight based on pos of landmarks  
-            # err = math.exp(1/(math.sqrt(2*math.pi*sigma_r**2*math.e), -1*(sensor_data[1]-dist)**2/(2*sigma_r**2)))
-            base = 1/math.sqrt(2*math.pi*sigma_r**2)
-            # print((sensor_data)
             x = sensor_data['range'][i]
+            # print((sensor_data)
             miu = dist
-            exponent = (-1*(x-miu)**2)/(2*sigma_r**2)
-            err = base * math.exp(exponent)
-            error+=err
-        error /= len(landmarks)
+            sigma_r_squared = sigma_r**2
+
+            cur_error = (1 / (math.sqrt(2 * math.pi * sigma_r_squared))) * math.exp(-((x - miu)**2) / (2 * sigma_r_squared)) #eqn
+            sum_error += cur_error
+
+        sum_error = sum_error/len(landmarks)
         
-        #store weight? with append
-        weights.append(error)
+        weights.append(sum_error)
     
     '''***        ***'''
 
-
-    #normalize weights
+    #normalize the weights and return
     normalizer = sum(weights)
-    #weights = weights / normalizer
+    weights = [weights / normalizer for weights in weights] #normalization
 
     return weights
 
@@ -175,24 +169,24 @@ def resample_particles(particles, weights):
     # N = len(particles)
     # new_particles = []
 
-    # # Compute cumulative sum of weights
+    # #compute cumulative sum of weights
     # cum_sum = [0.0]
     # for weight in weights:
     #     cum_sum.append(cum_sum[-1] + weight)
-    # print("length: ",len(cum_sum))
+    # #print("length: ",len(cum_sum))
     # # Initialize variables
     # index = random.uniform(0, 1 / N)
     # j = 0
 
-    # # Resampling loop
+    # #resampling loop
     # for i in range(N):
-    #     print("index: ", index)
+    #     #print("index: ", index)
     #     while j < N - 1 and index > cum_sum[j]:
     #         j += 1
     #     new_particles.append(particles[j])
     #     index += 1 / N
 
-    # # Normalize weights
+    # #normalize weights
     # total_weight = sum(weights)
     # normalized_weights = [weight / total_weight for weight in weights]
 
@@ -201,16 +195,16 @@ def resample_particles(particles, weights):
     N = len(particles)
     new_particles = []
 
-    # Normalize weights
+    #normalize weights
     total_weight = sum(weights)
     normalized_weights = [weight / total_weight for weight in weights]
 
-    # Create cumulative distribution
+    #create cumulative distribution
     cumulative_distribution = [0.0]
     for weight in normalized_weights:
         cumulative_distribution.append(cumulative_distribution[-1] + weight)
 
-    # Resampling loop
+    #resampling loop
     for i in range(N):
         random_value = random.uniform(0, 1)
         for j in range(N):
@@ -218,9 +212,6 @@ def resample_particles(particles, weights):
                 new_particles.append(particles[j])
                 break
 
-
     '''***        ***'''
 
-
     return new_particles
-
