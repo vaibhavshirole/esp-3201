@@ -19,69 +19,101 @@ def main():
 
     ## Define parts used for calculations
 
-    # Define constant velocity model parameters
+    # define constant velocity model parameters
     dt = 1  # Time step between measurements
     velocity = 12.5  # Constant velocity in m/s
 
-    # Initialize Kalman filter parameters
+    # set initial state
     with open('MeasGT.csv', 'r') as file:
         # Read the first line to get the initial measurement
         initial_data = file.readline().strip().split(',')
-        initial_state = np.array([float(initial_data[1]), float(initial_data[2]), velocity, velocity])  # Use the first measurement    state_estimate = initial_state
+        initial_state = np.array([float(initial_data[1]), float(initial_data[2]), velocity, velocity])  # Use the first measurement
     state_estimate = initial_state
-    #print(state_estimate)
-    state_covariance = np.eye(4)  # Initial state covariance
-    process_noise_cov = np.eye(4)  # Process noise covariance
-    #print(state_covariance)
-    measurement_noise_cov = np.array([[10**2, 0],
-                                    [0, 10**2]])  # Measurement noise covariance (R)
 
-    # Kalman gain matrix
+    # set P matrix
+    state_covariance = np.array([[10**2, 0, 0, 0],
+                                 [0, 10**2, 0, 0],
+                                 [0, 0, ((velocity/3)**2), 0],
+                                 [0, 0, 0, ((velocity/3)**2)]]) # Initial state covariance identity matrix (P matrix)
+    
+    # set Q matrix
+    process_noise_cov = np.array([[1, 0, 0, 0],
+                                  [0, 1, 0, 0],
+                                  [0, 0, 1, 0],
+                                  [0, 0, 0, 1]]) # Process noise covariance identity matrix
+
+    # set R matrix
+    measurement_noise_cov = np.array([[10**2, 0],
+                                    [0, 10**2]])  # Measurement noise covariance (R matrix)
+
+    # kalman gain matrix
     kalman_gain = np.zeros((4, 2))
 
-    # Lists to store ground truth and predicted values
+    # lists to store ground truth and predicted values
     ground_truth_x = []
     ground_truth_y = []
     predicted_x = []
     predicted_y = []
+    measured_x = []
+    measured_y = []
 
 
-    ## The final state_estimate contains the filtered position and velocity information.
+    ## The final state_estimate contains the filtered position and velocity information
 
-    # Read the CSV file and iterate through measurements
+    # read the CSV file and iterate through measurements
     with open('MeasGT.csv', 'r') as file:
         for line in file:
             data = line.strip().split(',')
             time = float(data[0])
-            measurement = np.array([float(data[1]), float(data[2])])  # [x, y]
+            measurement = np.array([float(data[1]), float(data[2])])  # create [x,y] of the measurement data from csv
 
-            # Prediction Step (constant velocity model)
+            # PREDICTION STEP
             A = np.array([[1, 0, dt, 0],
-                        [0, 1, 0, dt],
-                        [0, 0, 1, 0],
-                        [0, 0, 0, 1]])
-            state_estimate = np.dot(A, state_estimate)
+                          [0, 1, 0, dt],
+                          [0, 0, 1, 0],
+                          [0, 0, 0, 1]])
+            #eqn1
+            state_estimate = np.dot(A, state_estimate) # can assume G_(k-1)*u_(k-1) is 0 for this assignment
+
+            #eqn2
             state_covariance = np.dot(np.dot(A, state_covariance), A.T) + process_noise_cov
 
-            # Update Step
+            # UPDATE STEP
             H = np.array([[1, 0, 0, 0],
-                        [0, 1, 0, 0]])
+                          [0, 1, 0, 0]])
+            
+            # get the innovation
             measurement_residual = measurement - np.dot(H, state_estimate)
-            measurement_residual_cov = np.dot(np.dot(H, state_covariance), H.T) + measurement_noise_cov
+
+            #eqn2a
+            measurement_residual_cov = np.dot(np.dot(H, state_covariance), H.T) + measurement_noise_cov #bottom part of eqn2
             kalman_gain = np.dot(np.dot(state_covariance, H.T), np.linalg.inv(measurement_residual_cov))
+
+            #eqn2b
             state_estimate = state_estimate + np.dot(kalman_gain, measurement_residual)
             state_covariance = np.dot(np.eye(4) - np.dot(kalman_gain, H), state_covariance)
 
-            # Store ground truth values and predicted values
+            # store ground truth values and predicted values
             ground_truth_x.append(float(data[3]))
             ground_truth_y.append(float(data[4]))
             predicted_x.append(state_estimate[0])
             predicted_y.append(state_estimate[1])
+            measured_x.append(measurement[0])
+            measured_y.append(measurement[1])
 
-    # Plot ground truth and predicted values
+            # print data at the current predicted (x, y) coordinates
+            current_predicted_x = state_estimate[0]
+            current_predicted_y = state_estimate[1]
+            print(f"Predicted x,y: ({current_predicted_x:.2f} m, {current_predicted_y:.2f} m)")
+            print(f"Measured x,y: ({measurement[0]:.2f} m, {measurement[1]:.2f} m)")
+            print(f"Ground truth x,y: ({float(data[3])} m, {float(data[4])} m)")
+            print()
+
+    # plot ground truth and predicted values
     plt.figure(figsize=(10, 6))
-    plt.plot(ground_truth_x, ground_truth_y, label='Ground Truth', marker='o')
-    plt.plot(predicted_x, predicted_y, label='Predicted', marker='x')
+    plt.plot(ground_truth_x, ground_truth_y, label='Ground Truth', marker='o', linestyle='-', color='green')
+    plt.plot(predicted_x, predicted_y, label='Predicted', marker='x', linestyle='-', color='blue')
+    plt.plot(measured_x, measured_y, label='Measured', marker='.', linestyle='', color='red')
     plt.xlabel('X Position (m)')
     plt.ylabel('Y Position (m)')
     plt.title('Kalman Filter Tracking')
