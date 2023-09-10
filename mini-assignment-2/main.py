@@ -27,7 +27,10 @@ def main():
     with open('MeasGT.csv', 'r') as file:
         # Read the first line to get the initial measurement
         initial_data = file.readline().strip().split(',')
-        initial_state = np.array([float(initial_data[1]), float(initial_data[2]), velocity, velocity])  # Use the first measurement
+        initial_state = np.array([float(initial_data[1]), 
+                                  float(initial_data[2]), 
+                                  velocity              , 
+                                  velocity              ])  # Use the first measurement
     state_estimate = initial_state
 
     # set P matrix
@@ -46,8 +49,8 @@ def main():
     measurement_noise_cov = np.array([[10**2, 0],
                                     [0, 10**2]])  # Measurement noise covariance (R matrix)
 
-    # kalman gain matrix
-    kalman_gain = np.zeros((4, 2))
+    # set K matrix 
+    kalman_gain = np.zeros((4, 2))  #kalman gain matrix
 
     # lists to store ground truth and predicted values
     ground_truth_x = []
@@ -57,6 +60,9 @@ def main():
     measured_x = []
     measured_y = []
 
+    # Initialize RMSE variables
+    rmse_x = 0
+    rmse_y = 0
 
     ## The final state_estimate contains the filtered position and velocity information
 
@@ -101,6 +107,10 @@ def main():
             measured_x.append(measurement[0])
             measured_y.append(measurement[1])
 
+            # calculate RMSE for x and y after each correction step
+            rmse_x += (float(data[3]) - state_estimate[0])**2
+            rmse_y += (float(data[4]) - state_estimate[1])**2
+
             # print data at the current predicted (x, y) coordinates
             current_predicted_x = state_estimate[0]
             current_predicted_y = state_estimate[1]
@@ -108,6 +118,12 @@ def main():
             print(f"Measured x,y: ({measurement[0]:.2f} m, {measurement[1]:.2f} m)")
             print(f"Ground truth x,y: ({float(data[3])} m, {float(data[4])} m)")
             print()
+    
+    # calculate and print the final RMSE
+    rmse_x = np.sqrt(rmse_x / len(ground_truth_x))
+    rmse_y = np.sqrt(rmse_y / len(ground_truth_y))
+    print(f"RMSE for x: {rmse_x:.2f} m")
+    print(f"RMSE for y: {rmse_y:.2f} m")
 
     # plot ground truth and predicted values
     plt.figure(figsize=(10, 6))
