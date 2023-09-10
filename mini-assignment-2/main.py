@@ -40,10 +40,10 @@ def main():
                                  [0, 0, 0, ((velocity/3)**2)]]) # Initial state covariance identity matrix (P matrix)
     
     # set Q matrix
-    process_noise_cov = np.array([[1, 0, 0, 0],
-                                  [0, 1, 0, 0],
-                                  [0, 0, 1, 0],
-                                  [0, 0, 0, 1]]) # Process noise covariance identity matrix
+    process_noise_cov = np.array([[0.01, 0, 0, 0],
+                                  [0, 0.01, 0, 0],
+                                  [0, 0, 0.01, 0],
+                                  [0, 0, 0, 0.01]]) # Process noise covariance identity matrix
 
     # set R matrix
     measurement_noise_cov = np.array([[10**2, 0],
@@ -132,7 +132,7 @@ def main():
     plt.plot(measured_x, measured_y, label='Measured', marker='.', linestyle='', color='red')
     plt.xlabel('X Position (m)')
     plt.ylabel('Y Position (m)')
-    plt.title('Kalman Filter Tracking')
+    plt.title(f'Kalman Filter Tracking - RMSE for (x,y): {rmse_x:.2f} m, {rmse_y:.2f} m ')
     plt.legend()
     plt.grid()
     plt.show()
