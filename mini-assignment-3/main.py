@@ -87,12 +87,8 @@ plt.subplot(1, 3, 3)
 scatter = plt.scatter(test_input[:, 0], test_input[:, 1], c=predicted_output.flatten(), cmap='coolwarm', s=100)
 plt.xlabel('X input')
 plt.ylabel('Y input')
+plt.colorbar(label='Predicted value at X,Y pair')
 plt.title('Predicted Results')
-
-# Add a legend for the predicted results
-legend_labels = ['Blue dot - 0', 'Red dot - 1']
-scatter.set_label(legend_labels)
-plt.legend(loc='center')
 
 plt.tight_layout()
 plt.show()
