@@ -38,11 +38,11 @@ def main():
     X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
     y = np.array([[0], [1], [1], [0]])
     learning_rate = 0.1
-    epochs = 2000
+    rounds = 2500
     loss_history = []
 
     # training
-    for epoch in range(epochs):
+    for round in range(rounds):
 
         # forward pass
         hidden_input = bias_hidden + np.dot(X, weights_hidden)
@@ -79,10 +79,10 @@ def main():
     
     # plot loss function
     plt.subplot(1, 3, 1)
-    plt.plot(range(epochs), loss_history)
-    plt.xlabel('Epochs')
+    plt.plot(range(rounds), loss_history)
+    plt.xlabel('Rounds')
     plt.ylabel('Loss')
-    plt.title('Loss Over Epochs')
+    plt.title('Loss Over Rounds')
 
     # plot test_input
     plt.subplot(1, 3, 2)
