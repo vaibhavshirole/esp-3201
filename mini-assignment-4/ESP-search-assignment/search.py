@@ -54,31 +54,37 @@ def bfs(maze):
     """
     start = maze.getStart()
     objectives = maze.getObjectives()
-    queue = [(start, [])]  # Queue stores (position, path) pairs
 
     print("objectives: " + str(objectives))
     print("start: " + str(start))
-
-    visited = set()  # To keep track of visited positions
-
+    
+    # Initialize the queue with the start state
+    queue = [(start, [])]  # Each element in the queue is a tuple (position, path)
+    
     while queue:
-        current, path = queue.pop(0)  # Pop the first element (FIFO)
-        row, col = current
-
-        if current in objectives:
-            objectives.remove(current)
-            if not objectives:  # If all objectives are visited, return the path
-                print("path: " + str(path))
-                return path
-
-        visited.add(current)
-
-        for neighbor in maze.getNeighbors(row, col):
-            if neighbor not in visited and maze.isValidMove(*neighbor):
-                new_path = path + [current]
+        current_pos, current_path = queue.pop(0)  # Pop from the front of the queue
+        
+        # Check if the current position is an unvisited objective
+        if current_pos in objectives:
+            objectives.remove(current_pos)
+            
+            # If all objectives are visited, return the path
+            if not objectives:
+                print(current_path)
+                return current_path
+        
+        # Get valid neighbors of the current position
+        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
+        
+        for neighbor in neighbors:
+            new_path = current_path + [current_pos]
+            
+            # Avoid revisiting visited positions
+            if neighbor not in current_path:
                 queue.append((neighbor, new_path))
-
-    return []  # No path found
+    
+    # If no path is found, return an empty list to indicate failure
+    return []
 
 
 def dfs(maze):
