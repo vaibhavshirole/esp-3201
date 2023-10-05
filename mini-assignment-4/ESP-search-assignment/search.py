@@ -52,8 +52,33 @@ def bfs(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    # TODO: Write your code here        
-    return []
+    start = maze.getStart()
+    objectives = maze.getObjectives()
+    queue = [(start, [])]  # Queue stores (position, path) pairs
+
+    print("objectives: " + str(objectives))
+    print("start: " + str(start))
+
+    visited = set()  # To keep track of visited positions
+
+    while queue:
+        current, path = queue.pop(0)  # Pop the first element (FIFO)
+        row, col = current
+
+        if current in objectives:
+            objectives.remove(current)
+            if not objectives:  # If all objectives are visited, return the path
+                print("path: " + str(path))
+                return path
+
+        visited.add(current)
+
+        for neighbor in maze.getNeighbors(row, col):
+            if neighbor not in visited and maze.isValidMove(*neighbor):
+                new_path = path + [current]
+                queue.append((neighbor, new_path))
+
+    return []  # No path found
 
 
 def dfs(maze):
