@@ -150,11 +150,10 @@ def ucs(maze):
     visited = set()
     
     while ucs_list:
-        # Find the state with the lowest cost using a simple loop
         min_index = 0
         min_cost = ucs_list[0][0]
 
-        # Sort the ucs_list data structure
+        # Sort the ucs_list data structure to find lowest cost
         for i in range(len(ucs_list)):
             cost = ucs_list[i][0]
             if cost < min_cost:
@@ -209,9 +208,10 @@ def astar(maze):
     visited = set()
     
     while astar_list:
-        # Find the state with the lowest f-cost (fn) using a loop
         min_index = 0
         min_fn = astar_list[0][0]
+
+        # Sort the astar_list data structure to find lowest cost
         for i in range(len(astar_list)):
             fn = astar_list[i][0]
             if fn < min_fn:
