@@ -55,11 +55,11 @@ def bfs(maze):
     start = maze.getStart()
     objectives = maze.getObjectives()
 
-    print("objectives: " + str(objectives))
-    print("start: " + str(start))
+    #print("objectives: " + str(objectives))
+    #print("start: " + str(start))
     
-    # Initialize the queue with the start state
-    queue = [(start, [])]  # Each element in the queue is a tuple (position, path)
+    # Initialize FIFO data structure with the start state
+    queue = [(start, [])]   # position, path
     
     while queue:
         current_pos, current_path = queue.pop(0)  # Pop from the front of the queue
@@ -98,11 +98,8 @@ def dfs(maze):
     start = maze.getStart()
     objectives = maze.getObjectives()
 
-    print("objectives: " + str(objectives))
-    print("start: " + str(start))
-    
-    # Initialize a stack for DFS
-    stack = [(start, [])]  # Each element in the stack is a tuple (position, path)
+    # Initialize LIFO data structure with the start state
+    stack = [(start, [])]  # position, path
     
     # Create a set to keep track of visited states
     visited = set()
@@ -143,7 +140,52 @@ def ucs(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    # TODO: Write your code here
+    start = maze.getStart()
+    objectives = maze.getObjectives()
+    
+    # Initialize a list for UCS, where each element is a tuple (cost, position, path)
+    ucs_list = [(0, start, [])]
+    
+    # Create a set to keep track of visited states
+    visited = set()
+    
+    while ucs_list:
+        # Find the state with the lowest cost using a simple loop
+        min_index = 0
+        min_cost = ucs_list[0][0]
+
+        # Sort the ucs_list data structure
+        for i in range(len(ucs_list)):
+            cost = ucs_list[i][0]
+            if cost < min_cost:
+                min_cost = cost
+                min_index = i
+        min_state = ucs_list.pop(min_index)
+        cost, current_pos, current_path = min_state  # Pop the state with the lowest cost
+        
+        # Check if the current position is an unvisited objective
+        if current_pos in objectives:
+            objectives.remove(current_pos)
+            
+            # If all objectives are visited, return the path
+            if not objectives:
+                return current_path
+        
+        # Mark the current state as visited
+        visited.add(current_pos)
+        
+        # Get valid neighbors of the current position
+        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
+        
+        for neighbor in neighbors:
+            new_path = current_path + [current_pos]
+            new_cost = cost + 1  # Assuming all step costs are equal to one
+            
+            # Avoid revisiting visited positions and update cost
+            if neighbor not in visited and maze.isValidMove(*neighbor):
+                ucs_list.append((new_cost, neighbor, new_path))
+    
+    # If no path is found, return an empty list to indicate failure
     return []
 
 
