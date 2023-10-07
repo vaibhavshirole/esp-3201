@@ -70,7 +70,7 @@ def bfs(maze):
             
             # If all objectives are visited, return the path
             if not objectives:
-                print(current_path)
+                #print(current_path)
                 return current_path
         
         # Get valid neighbors of the current position
@@ -101,30 +101,35 @@ def dfs(maze):
     print("objectives: " + str(objectives))
     print("start: " + str(start))
     
-    # Initialize the stack with the start state and the remaining objectives
-    stack = [(start, [], set(objectives))]  # Each element in the stack is a tuple (position, path, remaining_objectives)
-    visited = set()  # To keep track of visited states
+    # Initialize a stack for DFS
+    stack = [(start, [])]  # Each element in the stack is a tuple (position, path)
+    
+    # Create a set to keep track of visited states
+    visited = set()
     
     while stack:
-        current_pos, current_path, remaining_objectives = stack.pop()  # Pop from the end of the stack
+        current_pos, current_path = stack.pop()  # Pop from the end of the stack
         
-        if not remaining_objectives:
-            return current_path  # Found a path that covers all objectives
+        # Check if the current position is an unvisited objective
+        if current_pos in objectives:
+            objectives.remove(current_pos)
+            
+            # If all objectives are visited, return the path
+            if not objectives:
+                return current_path
         
+        # Mark the current state as visited
         visited.add(current_pos)
         
         # Get valid neighbors of the current position
         neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
         
         for neighbor in neighbors:
-            if neighbor not in visited:
-                new_path = current_path + [current_pos]
-                new_remaining = set(remaining_objectives)
-                
-                if neighbor in new_remaining:
-                    new_remaining.remove(neighbor)
-                
-                stack.append((neighbor, new_path, new_remaining))
+            new_path = current_path + [current_pos]
+            
+            # Avoid revisiting visited positions
+            if neighbor not in visited and maze.isValidMove(*neighbor):
+                stack.append((neighbor, new_path))
     
     # If no path is found, return an empty list to indicate failure
     return []
@@ -138,39 +143,7 @@ def ucs(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    start = maze.getStart()
-    objectives = maze.getObjectives()
-    
-    # Initialize the queue with the start state and the remaining objectives
-    queue = [(0, start, [])]  # Each element in the queue is a tuple (cost, position, path)
-    visited = set()  # To keep track of visited states
-    
-    while queue:
-        # Sort the queue by cost in ascending order
-        queue.sort(key=lambda x: x[0])
-        
-        cost, current_pos, current_path = queue.pop(0)  # Pop the element with the lowest cost
-        
-        if current_pos in objectives:
-            objectives.remove(current_pos)
-            current_path.append(current_pos)
-            
-            if not objectives:
-                return current_path  # Found a path that covers all objectives
-        
-        visited.add(current_pos)
-        
-        # Get valid neighbors of the current position
-        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
-        
-        for neighbor in neighbors:
-            if neighbor not in visited:
-                new_path = current_path + [current_pos]
-                new_cost = cost + 1  # Assuming equal step costs
-                
-                queue.append((new_cost, neighbor, new_path))
-    
-    # If no path is found, return an empty list to indicate failure
+    # TODO: Write your code here
     return []
 
 
@@ -183,49 +156,9 @@ def astar(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    start = maze.getStart()
-    objectives = maze.getObjectives()
-    
-    def heuristic(position, remaining_objectives):
-        # A heuristic function that estimates the cost to reach the nearest remaining objective
-        min_dist = float('inf')
-        for obj in remaining_objectives:
-            dist = abs(position[0] - obj[0]) + abs(position[1] - obj[1])
-            if dist < min_dist:
-                min_dist = dist
-        return min_dist
-    
-    # Initialize the open set with the start state and the remaining objectives
-    open_set = [(heuristic(start, objectives), 0, start, [])]  # (f_cost, g_cost, position, path)
-    visited = set()  # To keep track of visited states
-    
-    while open_set:
-        # Sort the open set by f_cost in ascending order
-        open_set.sort(key=lambda x: x[0])
-        
-        f_cost, g_cost, current_pos, current_path = open_set.pop(0)  # Pop the element with the lowest f_cost
-        
-        if current_pos in objectives:
-            objectives.remove(current_pos)
-            current_path.append(current_pos)
-            
-            if not objectives:
-                return current_path  # Found a path that covers all objectives
-        
-        visited.add(current_pos)
-        
-        # Get valid neighbors of the current position
-        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
-        
-        for neighbor in neighbors:
-            if neighbor not in visited:
-                new_g_cost = g_cost + 1  # Assuming equal step costs
-                new_f_cost = new_g_cost + heuristic(neighbor, objectives)
-                
-                open_set.append((new_f_cost, new_g_cost, neighbor, current_path + [current_pos]))
-    
-    # If no path is found, return an empty list to indicate failure
+    # TODO: Write your code here
     return []
+
 
 
 def astar_corner(maze):
