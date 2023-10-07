@@ -198,7 +198,57 @@ def astar(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    # TODO: Write your code here
+    start = maze.getStart()
+    objectives = maze.getObjectives()
+    
+    # Initialize a list for A*, where each element is a tuple (fn, position, path)
+    fn_start = abs(start[0] - objectives[0][0]) + abs(start[1] - objectives[0][1])  # f-cost = g-cost + h-cost
+    astar_list = [(fn_start, start, [])]
+    
+    # Create a set to keep track of visited states
+    visited = set()
+    
+    while astar_list:
+        # Find the state with the lowest f-cost (fn) using a loop
+        min_index = 0
+        min_fn = astar_list[0][0]
+        for i in range(len(astar_list)):
+            fn = astar_list[i][0]
+            if fn < min_fn:
+                min_fn = fn
+                min_index = i
+        min_state = astar_list.pop(min_index)
+        fn, current_pos, current_path = min_state  # Pop the state with the lowest f cost
+        
+        # Check if the current position is an unvisited objective
+        if current_pos in objectives:
+            objectives.remove(current_pos)
+            
+            # If all objectives are visited, return the path
+            if not objectives:
+                return current_path
+        
+        # Mark the current state as visited
+        visited.add(current_pos)
+        
+        # Get valid neighbors of the current position
+        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
+        
+        for neighbor in neighbors:
+            new_path = current_path + [current_pos]
+            gn = len(new_path)  # g-cost is the number of steps taken
+            
+            # Calculate h-cost (hn) using the Manhattan distance directly
+            hn = abs(neighbor[0] - objectives[0][0]) + abs(neighbor[1] - objectives[0][1])
+            
+            # Calculate f-cost (fn)
+            fn = gn + hn
+            
+            # Avoid revisiting visited positions and update cost
+            if neighbor not in visited and maze.isValidMove(*neighbor):
+                astar_list.append((fn, neighbor, new_path))
+    
+    # If no path is found, return an empty list to indicate failure
     return []
 
 
