@@ -127,44 +127,37 @@ def ucs(maze):
     start = maze.getStart()
     objectives = maze.getObjectives()
     
-    # Initialize a list for UCS, where each element is a tuple (cost, position, path)
-    ucs_list = [(0, start, [])]
-    
-    # Create a set to keep track of visited states
-    visited = set()
-    
+    # Initialize 
+    ucs_list = [(0, start, [])]     # cost, position, path
     while ucs_list:
+        
+        # Inits
         min_index = 0
         min_cost = ucs_list[0][0]
 
-        # Sort the ucs_list data structure to find lowest cost
+        # Sort ucs_list data structure to find lowest cost
         for i in range(len(ucs_list)):
             cost = ucs_list[i][0]
             if cost < min_cost:
                 min_cost = cost
                 min_index = i
-        min_state = ucs_list.pop(min_index)
-        cost, current_pos, current_path = min_state  # Pop the state with the lowest cost
+        min_state = ucs_list.pop(min_index)  # Pull lowest cost state
+        cost, current_pos, current_path = min_state
         
-        # Check if the current position is an unvisited objective
+        # Check if unvisited objective
         if current_pos in objectives:
             objectives.remove(current_pos)
-            
-            # If all objectives are visited, return the path
-            if not objectives:
+            if len(objectives) == 0:
                 return current_path
-        
-        # Mark the current state as visited
-        visited.add(current_pos)
 
+        # Get valid neighbors of the current position
         neighbors = maze.getNeighbors(current_pos[0], current_pos[1])        
         for neighbor in neighbors:
             new_path = current_path + [current_pos]
-            new_cost = cost + 1  # Assuming all step costs are equal to one
             
-            # Avoid revisiting visited positions and update cost
-            if neighbor not in visited and maze.isValidMove(*neighbor):
-                ucs_list.append((new_cost, neighbor, new_path))
+            # Don't allow to visit already visited
+            if neighbor not in current_path:
+                ucs_list.append((cost+1, neighbor, new_path))  # Update cost
     
     # If no path is found, return an empty list to indicate failure
     return []
