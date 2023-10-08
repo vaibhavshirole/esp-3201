@@ -18,6 +18,8 @@ files and classes when code is run, so be careful to not modify anything else.
 # maze is a Maze object based on the maze from the file specified by input filename
 # searchMethod is the search method specified by --method flag (bfs,dfs,astar,astar_multi,extra)
 
+import time
+
 def search(maze, searchMethod):
     return {
         "bfs": bfs,
@@ -229,7 +231,6 @@ def astar(maze):
     return []
 
 
-
 def astar_corner(maze):
     """
     Runs A* for part 2 of the assignment.
@@ -240,15 +241,14 @@ def astar_corner(maze):
     """
     start = maze.getStart()
     objectives = maze.getObjectives()
-    num_objectives = len(objectives)
 
-    # Define the heuristic function
+    # Define the heuristic (manhattan distance, but to each corner)
     def heuristic(state):
-        # Calculate the maximum Manhattan distance to an unvisited corner
+        # Calculate maximum Manhattan distance to all unvisited corners
         max_distance = 0
         for obj in objectives:
             found = False
-            for i in range(num_objectives):
+            for i in range(len(objectives)):
                 if state[0] == obj and i not in state[1]:
                     distance = abs(state[0][0] - obj[0]) + abs(state[0][1] - obj[1])
                     max_distance = max(max_distance, distance)
@@ -256,59 +256,56 @@ def astar_corner(maze):
                     break
             if found:
                 break
+
         return max_distance
 
-    # Initialize the priority queue with the starting state
-    fn_start = heuristic((start, set(), []))
-    astar_list = [(fn_start, 0, start, set(), [])]
-
-    # Initialize the explored set
+    # Initialize A* data structure
+    hn_start = heuristic((start, set(), []))
+    astar_list = [(hn_start, 0, 0, start, set(), [])]  # (hn, gn, fn, position, collected, path)
     explored = set()
 
     while astar_list:
+
+        # Inits
         min_index = 0
-        fn_start = astar_list[0][0]
+        hn_start = astar_list[0][0]
 
-        # Find the state with the lowest priority
+        # Sort the astar_list data structure to find the lowest cost
         for i in range(len(astar_list)):
-            fn = astar_list[i][0]
-            if fn < fn_start:
-                fn_start = fn
+            hn = astar_list[i][0]
+            if hn < hn_start:
+                hn_start = hn
                 min_index = i
-
-        # Pop the state with the lowest priority
-        _, cost, current_pos, collected, path = astar_list.pop(min_index)
+        min_state = astar_list.pop(min_index)
+        _, gn, hn, current_pos, collected, path = min_state  # Pull lowest cost state
 
         # Check if all corners have been visited
-        if len(collected) == num_objectives:
-            #print(path)
+        if len(collected) == len(objectives):
             return path
 
-        # Check if the current state has already been explored
+        # Check if current state has been explored
         if (current_pos, tuple(sorted(collected))) in explored:
             continue
+        else:
+            explored.add((current_pos, tuple(sorted(collected))))  # Mark as explored
 
-        # Mark the current state as explored
-        explored.add((current_pos, tuple(sorted(collected))))
-
-        # Generate successor states (valid neighbors)
+        # Get valid neighbors of the current position
         neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
-
         for neighbor in neighbors:
-            new_pos = neighbor
+            new_path = path + [current_pos]  # Update path with the collected corners
             new_collected = set(collected)
 
             # Check if the new position collects a corner
-            for i in range(num_objectives):
-                if new_pos == objectives[i] and i not in new_collected:
+            for i in range(len(objectives)):
+                if neighbor == objectives[i] and i not in new_collected:
                     new_collected.add(i)
                     break
 
-            # Calculate the new cost and update the list
-            new_cost = cost + 1
-            new_fn = new_cost + heuristic((new_pos, new_collected, []))
-            new_path = path + [(new_pos)]  # Update path with the collected corners
-            astar_list.append((new_fn, new_cost, new_pos, new_collected, new_path))
+            gn = len(new_path)
+            hn = heuristic((neighbor, new_collected, []))
+            fn = gn + hn
+            
+            astar_list.append((hn, gn, fn, neighbor, new_collected, new_path))
 
     # If no path is found, return an empty list
     return []
