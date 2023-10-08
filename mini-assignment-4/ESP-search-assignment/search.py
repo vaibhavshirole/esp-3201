@@ -272,7 +272,7 @@ def astar_corner(maze):
             found = False
             for i in range(num_objectives):
                 if state[:2] == obj and i not in state[2]:
-                    distance = abs(state[0] - obj[0]) + abs(state[1] - obj[1])
+                    distance = abs(state[0][0] - obj[0]) + abs(state[0][1] - obj[1])
                     max_distance = max(max_distance, distance)
                     found = True
                     break
@@ -281,61 +281,60 @@ def astar_corner(maze):
         return max_distance
 
     # Initialize the priority queue with the starting state
-    fn_start = heuristic((start[0], start[1], []))
-    astar_list = [(fn_start, 0, start[0], start[1], [], [])]
+    fn_start = heuristic((start, set(), []))
+    astar_list = [(fn_start, 0, start, set(), [])]
 
     # Initialize the explored set
     explored = set()
 
     while astar_list:
         min_index = 0
-        min_priority = astar_list[0][0]
+        fn_start = astar_list[0][0]
 
         # Find the state with the lowest priority
         for i in range(len(astar_list)):
-            priority = astar_list[i][0]
-            if priority < min_priority:
-                min_priority = priority
+            fn = astar_list[i][0]
+            if fn < fn_start:
+                fn_start = fn
                 min_index = i
 
         # Pop the state with the lowest priority
-        _, cost, row, col, collected, path = astar_list.pop(min_index)
+        _, cost, current_pos, collected, path = astar_list.pop(min_index)
 
-        # Check if the current state is the goal state
+        # Check if all corners have been visited
         if len(collected) == num_objectives:
+            print(path)
             return path
 
         # Check if the current state has already been explored
-        if (row, col, tuple(sorted(collected))) in explored:
+        if (current_pos, frozenset(collected)) in explored:
             continue
 
         # Mark the current state as explored
-        explored.add((row, col, tuple(sorted(collected))))
+        explored.add((current_pos, frozenset(collected)))
 
-        # Generate successor states
-        for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-            new_row, new_col = row + dr, col + dc
+        # Generate successor states (valid neighbors)
+        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
 
-            # Check if the move is valid
-            if maze.isValidMove(new_row, new_col):
-                new_collected = list(collected)
+        for neighbor in neighbors:
+            new_pos = neighbor
+            new_collected = set(collected)
 
-                # Check if the new position collects a dot
-                found = False
-                for i, obj in enumerate(objectives):
-                    if new_row == obj[0] and new_col == obj[1] and i not in new_collected:
-                        new_collected.append(i)
-                        found = True
-                        break
+            # Check if the new position collects a corner
+            for i, obj in enumerate(objectives):
+                if new_pos == obj and i not in new_collected:
+                    new_collected.add(i)
+                    break
 
-                # Calculate the new cost and update the list
-                new_cost = cost + 1
-                new_path = path + [(new_row, new_col)]
-                new_priority = new_cost + heuristic((new_row, new_col, new_collected))
-                astar_list.append((new_priority, new_cost, new_row, new_col, new_collected, new_path))
+            # Calculate the new cost and update the list
+            new_cost = cost + 1
+            new_fn = new_cost + heuristic((new_pos, new_collected, []))
+            new_path = path + [(new_pos)]  # Update path with the collected corners
+            astar_list.append((new_fn, new_cost, new_pos, new_collected, new_path))
 
     # If no path is found, return an empty list
     return []
+
 
 def astar_multi(maze):
     """
