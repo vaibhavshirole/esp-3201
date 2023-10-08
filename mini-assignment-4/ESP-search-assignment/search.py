@@ -344,7 +344,7 @@ def astar_multi(maze):
         astar_list.append((fn, gn, current_state))
         cost = {}
         cost[current_state] = 0
-        parent_tree = {}
+        path_track = {}
 
         while astar_list:
             
@@ -371,13 +371,13 @@ def astar_multi(maze):
                 if neighbor not in cost or gn < cost[neighbor]:
                     cost[neighbor] = gn
                     astar_list.append((fn, gn, neighbor))
-                    parent_tree[neighbor] = current_state
+                    path_track[neighbor] = current_state
         
         # Add path to this objective to the final path
         current = nearest_goal
         objective_path = [current]
         while current != start:
-            current = parent_tree[current]
+            current = path_track[current]
             objective_path.append(current)
         objective_path.reverse()  # path was backwards
         path.extend(objective_path)  # Include the objective in the path
