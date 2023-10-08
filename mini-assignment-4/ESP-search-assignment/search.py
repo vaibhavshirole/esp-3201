@@ -311,6 +311,7 @@ def astar_corner(maze):
     return []
 
 
+#   CHANGED STRATEGY BECAUSE OLD METHOD WOULD SEARCH EVERYTHING AND TAKE TOO LONG!
 def astar_multi(maze):
     """
     Runs A* search for finding the shortest path while visiting all objectives.
@@ -325,54 +326,63 @@ def astar_multi(maze):
     path = []  # To store the final path
 
     while objectives:
-        nearest_goal = objectives[0]
-        min_distance = abs(start[0] - objectives[0][0]) + abs(start[1] - objectives[0][1])  # Initial Manhattan distance
+        nearest_goal = objectives[0]  # Pre-determine the starting objective for efficiency
+        min_distance = manhattan_distance(start, objectives[0])  # Initial Manhattan distance
 
         for i in range(1, len(objectives)):
-            distance = abs(start[0] - objectives[i][0]) + abs(start[1] - objectives[i][1])  # Calculate Manhattan distance
+            distance = manhattan_distance(start, objectives[i])  # Calculate Manhattan distance
             if distance < min_distance:
                 min_distance = distance
                 nearest_goal = objectives[i]
 
-        # Use A* search to reach the nearest objective
         current_state = start
-        frontier = []  # List of frontier nodes
-        frontier.append((0, current_state))
+        astar_list = []  # List of A* nodes
+        fn = 0  # f-cost
+        gn = 0  # g-cost
+        hn = manhattan_distance(current_state, nearest_goal)  # h-cost (heuristic)
+
+        astar_list.append((fn, gn, current_state))
         cost = {}
         cost[current_state] = 0
         parent_tree = {}
 
-        while frontier:
-            # Find the node with the lowest cost in the frontier
+        while astar_list:
+            
+            # Inits
             min_index = 0
-            min_cost = frontier[0][0]
-            for i in range(1, len(frontier)):
-                if frontier[i][0] < min_cost:
-                    min_cost = frontier[i][0]
-                    min_index = i
-            current_state = frontier.pop(min_index)[1]
+            min_fn = astar_list[0][0]
 
+            # Sort the astar_list data structure to find the lowest cost
+            for i in range(1, len(astar_list)):
+                if astar_list[i][0] < min_fn:
+                    min_fn = astar_list[i][0]
+                    min_index = i
+            current_state = astar_list.pop(min_index)[2]
             if current_state == nearest_goal:
                 break
 
             # Explore neighbors
             for neighbor in maze.getNeighbors(current_state[0], current_state[1]):
-                new_cost = cost[current_state] + 1 + abs(neighbor[0] - nearest_goal[0]) + abs(neighbor[1] - nearest_goal[1])  # f=g-h, Manhattan
-                if neighbor not in cost or new_cost < cost[neighbor]:
-                    cost[neighbor] = new_cost
-                    frontier.append((new_cost, neighbor))
+                
+                gn = cost[current_state] + 1
+                hn = manhattan_distance(neighbor, nearest_goal)  # Calculate h-cost (heuristic)
+                fn = gn + hn  # Calculate f-cost
+
+                if neighbor not in cost or gn < cost[neighbor]:
+                    cost[neighbor] = gn
+                    astar_list.append((fn, gn, neighbor))
                     parent_tree[neighbor] = current_state
         
-        # Reconstruct the path for this objective and add it to the final path
+        # Add path to this objective to the final path
         current = nearest_goal
         objective_path = [current]
         while current != start:
             current = parent_tree[current]
             objective_path.append(current)
-        objective_path.reverse()
+        objective_path.reverse()  # path was backwards
         path.extend(objective_path)  # Include the objective in the path
 
-        # Mark the objective as visited and update the start position
+        # Mark objective visited and update start position
         objectives_visited.append(nearest_goal)
         start = nearest_goal
         objectives.remove(nearest_goal)
