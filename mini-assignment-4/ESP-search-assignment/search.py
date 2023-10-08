@@ -336,6 +336,8 @@ def astar_corner(maze):
     return []
 
 
+import heapq
+
 def astar_multi(maze):
     """
     Runs A star for part 3 of the assignment in the case where there are
@@ -345,5 +347,115 @@ def astar_multi(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    # TODO: Write your code here
+    start = maze.getStart()
+    objectives = maze.getObjectives()
+    num_objectives = len(objectives)
+
+    # Initialize a table to store MST lengths for sets of dots
+    mst_table = {}
+
+    def compute_mst_length(dot_set):
+        """
+        Compute the length of the Minimum Spanning Tree (MST) for a set of dots using Prim's algorithm.
+
+        @param dot_set: A set of dot coordinates.
+
+        @return mst_length: The length of the MST.
+        """
+        if len(dot_set) <= 1:
+            return 0
+
+        # Create a priority queue for Prim's algorithm
+        pq = [(0, start)]
+        mst_length = 0
+        connected_dots = set()
+
+        while pq:
+            cost, current = heapq.heappop(pq)
+
+            if current in connected_dots:
+                continue
+
+            connected_dots.add(current)
+            mst_length += cost
+
+            for dot in dot_set - connected_dots:
+                heapq.heappush(pq, (abs(current[0] - dot[0]) + abs(current[1] - dot[1]), dot))
+
+        return mst_length
+
+    # Define the heuristic function
+    def heuristic(state):
+        # Check if there are any dots remaining
+        if not state[1]:
+            return 0  # No remaining dots, heuristic value is 0
+
+        # Calculate the MST length for the remaining dots
+        remaining_dots = set(objectives)  # Use a set for dot_set
+        for dot_index in state[1]:
+            remaining_dots.remove(objectives[dot_index])  # Remove dot using dot_index
+
+        if tuple(remaining_dots) in mst_table:
+            mst_length = mst_table[tuple(remaining_dots)]
+        else:
+            mst_length = compute_mst_length(remaining_dots)
+            mst_table[tuple(remaining_dots)] = mst_length
+
+        # Calculate the nearest dot's distance
+        nearest_dot_distance = min(abs(state[0][0] - objectives[dot_index][0]) + abs(state[0][1] - objectives[dot_index][1]) for dot_index in state[1])
+
+        return nearest_dot_distance + mst_length
+
+    # Initialize the priority queue with the starting state
+    fn_start = heuristic((start, set(), []))
+    astar_list = [(fn_start, 0, start, set(), [])]  # Use a set for collected
+
+    # Initialize the explored set
+    explored = set()
+
+    while astar_list:
+        min_index = 0
+        fn_start = astar_list[0][0]
+
+        # Find the state with the lowest priority
+        for i in range(len(astar_list)):
+            fn = astar_list[i][0]
+            if fn < fn_start:
+                fn_start = fn
+                min_index = i
+
+        # Pop the state with the lowest priority
+        _, cost, current_pos, collected, path = astar_list.pop(min_index)
+
+        # Check if all dots have been visited
+        if len(collected) == num_objectives:
+            return path
+
+        # Check if the current state has already been explored
+        if (current_pos, tuple(sorted(collected))) in explored:
+            continue
+
+        # Mark the current state as explored
+        explored.add((current_pos, tuple(sorted(collected))))
+
+        # Generate successor states (valid neighbors)
+        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
+
+        for neighbor in neighbors:
+            new_pos = neighbor
+            new_collected = set(collected)  # Use a set for collected
+
+            # Check if the new position collects a dot
+            for i, dot in enumerate(objectives):
+                if new_pos == dot and i not in new_collected:
+                    new_collected.add(i)
+                    break
+
+            # Calculate the new cost and update the list
+            new_cost = cost + 1
+            new_fn = new_cost + heuristic((new_pos, new_collected, []))
+            new_path = path + [(new_pos)]  # Update path with the collected dots
+            astar_list.append((new_fn, new_cost, new_pos, new_collected, new_path))
+
+    # If no path is found, return an empty list
     return []
