@@ -54,23 +54,18 @@ def bfs(maze):
     """
     start = maze.getStart()
     objectives = maze.getObjectives()
-
-    #print("objectives: " + str(objectives))
-    #print("start: " + str(start))
     
     # Initialize FIFO data structure with the start state
     queue = [(start, [])]   # position, path
-    
     while queue:
-        current_pos, current_path = queue.pop(0)  # Pop from the front of the queue
         
-        # Check if the current position is an unvisited objective
+        # Pull next
+        current_pos, current_path = queue.pop(0)
+        
+        # Check if univisited objective
         if current_pos in objectives:
             objectives.remove(current_pos)
-            
-            # If all objectives are visited, return the path
-            if not objectives:
-                #print(current_path)
+            if len(objectives) == 0:
                 return current_path
         
         # Get valid neighbors of the current position
@@ -79,11 +74,10 @@ def bfs(maze):
         for neighbor in neighbors:
             new_path = current_path + [current_pos]
             
-            # Avoid revisiting visited positions
+            # Don't allow to visit already visited neighbor
             if neighbor not in current_path:
                 queue.append((neighbor, new_path))
     
-    # If no path is found, return an empty list to indicate failure
     return []
 
 
@@ -97,22 +91,19 @@ def dfs(maze):
     """
     start = maze.getStart()
     objectives = maze.getObjectives()
+    visited = set()
 
     # Initialize LIFO data structure with the start state
     stack = [(start, [])]  # position, path
-    
-    # Create a set to keep track of visited states
-    visited = set()
-    
     while stack:
-        current_pos, current_path = stack.pop()  # Pop from the end of the stack
+
+        # Pull next
+        current_pos, current_path = stack.pop()
         
         # Check if the current position is an unvisited objective
         if current_pos in objectives:
             objectives.remove(current_pos)
-            
-            # If all objectives are visited, return the path
-            if not objectives:
+            if len(objectives) == 0:
                 return current_path
         
         # Mark the current state as visited
@@ -124,11 +115,10 @@ def dfs(maze):
         for neighbor in neighbors:
             new_path = current_path + [current_pos]
             
-            # Avoid revisiting visited positions
-            if neighbor not in visited and maze.isValidMove(*neighbor):
+            # Don't allow to visit already visited neighbor
+            if neighbor not in visited:
                 stack.append((neighbor, new_path))
     
-    # If no path is found, return an empty list to indicate failure
     return []
 
 
@@ -172,10 +162,8 @@ def ucs(maze):
         
         # Mark the current state as visited
         visited.add(current_pos)
-        
-        # Get valid neighbors of the current position
-        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
-        
+
+        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])        
         for neighbor in neighbors:
             new_path = current_path + [current_pos]
             new_cost = cost + 1  # Assuming all step costs are equal to one
@@ -336,9 +324,6 @@ def astar_corner(maze):
     return []
 
 
-import heapq
-import math
-
 def astar_multi(maze):
     """
     Runs A* search for finding the shortest path while visiting all objectives.
@@ -350,39 +335,45 @@ def astar_multi(maze):
     start = maze.getStart()
     objectives = maze.getObjectives()
     objectives_visited = []  # To keep track of visited objectives
-    
     path = []  # To store the final path
-    
+
     while objectives:
         nearest_goal = objectives[0]
-        min_distance = math.inf
-        
-        # Find the nearest unvisited objective
-        for obj in objectives:
-            distance = abs(start[0] - obj[0]) + abs(start[1] - obj[1]) # manhattan
+        min_distance = abs(start[0] - objectives[0][0]) + abs(start[1] - objectives[0][1])  # Initial Manhattan distance
+
+        for i in range(1, len(objectives)):
+            distance = abs(start[0] - objectives[i][0]) + abs(start[1] - objectives[i][1])  # Calculate Manhattan distance
             if distance < min_distance:
                 min_distance = distance
-                nearest_goal = obj
-        
+                nearest_goal = objectives[i]
+
         # Use A* search to reach the nearest objective
         current_state = start
-        frontier = []  # Heap of frontier nodes
-        heapq.heappush(frontier, (0, current_state))
+        frontier = []  # List of frontier nodes
+        frontier.append((0, current_state))
         cost = {}
         cost[current_state] = 0
         parent_tree = {}
-        
+
         while frontier:
-            current_state = heapq.heappop(frontier)[1]
-            
+            # Find the node with the lowest cost in the frontier
+            min_index = 0
+            min_cost = frontier[0][0]
+            for i in range(1, len(frontier)):
+                if frontier[i][0] < min_cost:
+                    min_cost = frontier[i][0]
+                    min_index = i
+            current_state = frontier.pop(min_index)[1]
+
             if current_state == nearest_goal:
                 break
-            
+
+            # Explore neighbors
             for neighbor in maze.getNeighbors(current_state[0], current_state[1]):
-                new_cost = cost[current_state] + 1 + abs(neighbor[0] - nearest_goal[0]) + abs(neighbor[1] - nearest_goal[1]) # f=g-h, manhattan
+                new_cost = cost[current_state] + 1 + abs(neighbor[0] - nearest_goal[0]) + abs(neighbor[1] - nearest_goal[1])  # f=g-h, Manhattan
                 if neighbor not in cost or new_cost < cost[neighbor]:
                     cost[neighbor] = new_cost
-                    heapq.heappush(frontier, (new_cost, neighbor))
+                    frontier.append((new_cost, neighbor))
                     parent_tree[neighbor] = current_state
         
         # Reconstruct the path for this objective and add it to the final path
@@ -392,11 +383,11 @@ def astar_multi(maze):
             current = parent_tree[current]
             objective_path.append(current)
         objective_path.reverse()
-        path.extend(objective_path[:-1])  # Exclude the starting position
-        
+        path.extend(objective_path)  # Include the objective in the path
+
         # Mark the objective as visited and update the start position
         objectives_visited.append(nearest_goal)
         start = nearest_goal
         objectives.remove(nearest_goal)
-    
+
     return path
