@@ -261,7 +261,62 @@ def astar_corner(maze):
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
-    # TODO: Write your code here
+    start = maze.getStart()
+    corners = maze.getObjectives()  # Get the coordinates of the four corners
+    
+    # Initialize a list for A*, where each element is a tuple (fn, position, path, visited_corners)
+    fn_start = 0
+    astar_list = [(fn_start, start, [], set())]
+    
+    while astar_list:
+        min_index = 0
+        min_fn = astar_list[0][0]
+        
+        # Sort the astar_list data structure to find the lowest cost
+        for i in range(len(astar_list)):
+            fn = astar_list[i][0]
+            if fn < min_fn:
+                min_fn = fn
+                min_index = i
+        
+        min_state = astar_list.pop(min_index)
+        fn, current_pos, current_path, visited_corners = min_state  # Pop the state with the lowest f cost
+        
+        # Check if the current position is a corner and mark it as visited
+        if current_pos in corners:
+            visited_corners.add(current_pos)
+            
+            # If all corners are visited, return the path
+            if visited_corners == set(corners):
+                return current_path
+        
+        # Get valid neighbors of the current position
+        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
+        
+        for neighbor in neighbors:
+            new_path = current_path + [current_pos]
+            gn = len(new_path)  # g-cost is the number of steps taken
+            
+            # Calculate h-cost (hn) using the Manhattan distance to the nearest unvisited corner
+            remaining_corners = set()
+            for corner in corners:
+                if corner not in visited_corners:
+                    remaining_corners.add(corner)   # See how many corners are left
+
+            if remaining_corners:
+                nearest_corner = min(remaining_corners, key=lambda corner: abs(corner[0] - neighbor[0]) + abs(corner[1] - neighbor[1]))
+                hn = abs(neighbor[0] - nearest_corner[0]) + abs(neighbor[1] - nearest_corner[1])
+            else:
+                hn = 0  # If all corners are visited, h-cost is 0
+            
+            # Calculate f-cost (fn)
+            fn = gn + hn
+            
+            # Avoid revisiting visited positions and update cost
+            if neighbor not in visited_corners and maze.isValidMove(*neighbor):
+                astar_list.append((fn, neighbor, new_path, visited_corners))
+    
+    # If no path is found, return an empty list to indicate failure
     return []
 
 
