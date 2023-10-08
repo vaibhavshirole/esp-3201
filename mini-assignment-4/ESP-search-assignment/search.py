@@ -271,7 +271,7 @@ def astar_corner(maze):
         for obj in objectives:
             found = False
             for i in range(num_objectives):
-                if state[:2] == obj and i not in state[2]:
+                if state[0] == obj and i not in state[1]:
                     distance = abs(state[0][0] - obj[0]) + abs(state[0][1] - obj[1])
                     max_distance = max(max_distance, distance)
                     found = True
@@ -303,15 +303,15 @@ def astar_corner(maze):
 
         # Check if all corners have been visited
         if len(collected) == num_objectives:
-            print(path)
+            #print(path)
             return path
 
         # Check if the current state has already been explored
-        if (current_pos, frozenset(collected)) in explored:
+        if (current_pos, tuple(sorted(collected))) in explored:
             continue
 
         # Mark the current state as explored
-        explored.add((current_pos, frozenset(collected)))
+        explored.add((current_pos, tuple(sorted(collected))))
 
         # Generate successor states (valid neighbors)
         neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
@@ -321,8 +321,8 @@ def astar_corner(maze):
             new_collected = set(collected)
 
             # Check if the new position collects a corner
-            for i, obj in enumerate(objectives):
-                if new_pos == obj and i not in new_collected:
+            for i in range(num_objectives):
+                if new_pos == objectives[i] and i not in new_collected:
                     new_collected.add(i)
                     break
 
