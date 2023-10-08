@@ -280,13 +280,14 @@ def astar_corner(maze):
         return max_distance
     
     # Initialize the priority queue with the starting state
-    priority_queue = [(heuristic((start[0], start[1], 0)), 0, start[0], start[1], 0, [])]
+    fn_start = heuristic((start[0], start[1], 0))
+    astar_list = [(fn_start, 0, start[0], start[1], 0, [])]
     
     # Initialize the explored set
     explored = set()
     
-    while priority_queue:
-        _, cost, row, col, dots_state, path = heapq.heappop(priority_queue)
+    while astar_list:
+        _, cost, row, col, dots_state, path = heapq.heappop(astar_list)
         
         # Check if the current state is the goal state
         if dots_state == (1 << num_objectives) - 1:
@@ -316,7 +317,7 @@ def astar_corner(maze):
                 new_cost = cost + 1
                 new_path = path + [(new_row, new_col)]
                 new_priority = new_cost + heuristic((new_row, new_col, new_dots_state))
-                heapq.heappush(priority_queue, (new_priority, new_cost, new_row, new_col, new_dots_state, new_path))
+                heapq.heappush(astar_list, (new_priority, new_cost, new_row, new_col, new_dots_state, new_path))
     
     # If no path is found, return an empty list
     return []
