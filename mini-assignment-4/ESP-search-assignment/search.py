@@ -70,11 +70,10 @@ def bfs(maze):
         
         # Get valid neighbors of the current position
         neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
-        
         for neighbor in neighbors:
             new_path = current_path + [current_pos]
             
-            # Don't allow to visit already visited neighbor
+            # Don't allow to visit already visited
             if neighbor not in current_path:
                 queue.append((neighbor, new_path))
     
@@ -91,7 +90,6 @@ def dfs(maze):
     """
     start = maze.getStart()
     objectives = maze.getObjectives()
-    visited = set()
 
     # Initialize LIFO data structure with the start state
     stack = [(start, [])]  # position, path
@@ -106,17 +104,13 @@ def dfs(maze):
             if len(objectives) == 0:
                 return current_path
         
-        # Mark the current state as visited
-        visited.add(current_pos)
-        
         # Get valid neighbors of the current position
         neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
-        
         for neighbor in neighbors:
             new_path = current_path + [current_pos]
             
-            # Don't allow to visit already visited neighbor
-            if neighbor not in visited:
+            # Don't allow to visit already visited
+            if neighbor not in current_path:
                 stack.append((neighbor, new_path))
     
     return []
