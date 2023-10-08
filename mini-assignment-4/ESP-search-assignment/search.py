@@ -251,7 +251,6 @@ def astar(maze):
     # If no path is found, return an empty list to indicate failure
     return []
 
-import heapq
 
 def astar_corner(maze):
     """
@@ -264,61 +263,77 @@ def astar_corner(maze):
     start = maze.getStart()
     objectives = maze.getObjectives()
     num_objectives = len(objectives)
-    
-    # Define a function to calculate Manhattan distance
-    def manhattan_distance(pos1, pos2):
-        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
-    
+
     # Define the heuristic function
     def heuristic(state):
         # Calculate the maximum Manhattan distance to an unvisited corner
         max_distance = 0
         for obj in objectives:
-            if (state[2] & (1 << objectives.index(obj))) == 0:
-                distance = manhattan_distance(state[:2], obj)
-                max_distance = max(max_distance, distance)
+            found = False
+            for i in range(num_objectives):
+                if state[:2] == obj and i not in state[2]:
+                    distance = abs(state[0] - obj[0]) + abs(state[1] - obj[1])
+                    max_distance = max(max_distance, distance)
+                    found = True
+                    break
+            if found:
+                break
         return max_distance
-    
+
     # Initialize the priority queue with the starting state
-    fn_start = heuristic((start[0], start[1], 0))
-    astar_list = [(fn_start, 0, start[0], start[1], 0, [])]
-    
+    fn_start = heuristic((start[0], start[1], []))
+    astar_list = [(fn_start, 0, start[0], start[1], [], [])]
+
     # Initialize the explored set
     explored = set()
-    
+
     while astar_list:
-        _, cost, row, col, dots_state, path = heapq.heappop(astar_list)
-        
+        min_index = 0
+        min_priority = astar_list[0][0]
+
+        # Find the state with the lowest priority
+        for i in range(len(astar_list)):
+            priority = astar_list[i][0]
+            if priority < min_priority:
+                min_priority = priority
+                min_index = i
+
+        # Pop the state with the lowest priority
+        _, cost, row, col, collected, path = astar_list.pop(min_index)
+
         # Check if the current state is the goal state
-        if dots_state == (1 << num_objectives) - 1:
+        if len(collected) == num_objectives:
             return path
-        
+
         # Check if the current state has already been explored
-        if (row, col, dots_state) in explored:
+        if (row, col, tuple(sorted(collected))) in explored:
             continue
-        
+
         # Mark the current state as explored
-        explored.add((row, col, dots_state))
-        
+        explored.add((row, col, tuple(sorted(collected))))
+
         # Generate successor states
         for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
             new_row, new_col = row + dr, col + dc
-            
+
             # Check if the move is valid
             if maze.isValidMove(new_row, new_col):
-                new_dots_state = dots_state
-                
+                new_collected = list(collected)
+
                 # Check if the new position collects a dot
+                found = False
                 for i, obj in enumerate(objectives):
-                    if (new_row, new_col) == obj and (dots_state & (1 << i)) == 0:
-                        new_dots_state |= (1 << i)
-                
-                # Calculate the new cost and update the priority queue
+                    if new_row == obj[0] and new_col == obj[1] and i not in new_collected:
+                        new_collected.append(i)
+                        found = True
+                        break
+
+                # Calculate the new cost and update the list
                 new_cost = cost + 1
                 new_path = path + [(new_row, new_col)]
-                new_priority = new_cost + heuristic((new_row, new_col, new_dots_state))
-                heapq.heappush(astar_list, (new_priority, new_cost, new_row, new_col, new_dots_state, new_path))
-    
+                new_priority = new_cost + heuristic((new_row, new_col, new_collected))
+                astar_list.append((new_priority, new_cost, new_row, new_col, new_collected, new_path))
+
     # If no path is found, return an empty list
     return []
 
