@@ -251,74 +251,75 @@ def astar(maze):
     # If no path is found, return an empty list to indicate failure
     return []
 
-
+import heapq
 
 def astar_corner(maze):
     """
-    Runs A star for part 2 of the assignment.
+    Runs A* for part 2 of the assignment.
 
     @param maze: The maze to execute the search on.
 
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
     start = maze.getStart()
-    corners = maze.getObjectives()  # Get the coordinates of the four corners
+    objectives = maze.getObjectives()
+    num_objectives = len(objectives)
     
-    # Initialize a list for A*, where each element is a tuple (fn, position, path, visited_corners)
-    fn_start = 0
-    astar_list = [(fn_start, start, [], set())]
+    # Define a function to calculate Manhattan distance
+    def manhattan_distance(pos1, pos2):
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
     
-    while astar_list:
-        min_index = 0
-        min_fn = astar_list[0][0]
-        
-        # Sort the astar_list data structure to find the lowest cost
-        for i in range(len(astar_list)):
-            fn = astar_list[i][0]
-            if fn < min_fn:
-                min_fn = fn
-                min_index = i
-        
-        min_state = astar_list.pop(min_index)
-        fn, current_pos, current_path, visited_corners = min_state  # Pop the state with the lowest f cost
-        
-        # Check if the current position is a corner and mark it as visited
-        if current_pos in corners:
-            visited_corners.add(current_pos)
-            
-            # If all corners are visited, return the path
-            if visited_corners == set(corners):
-                return current_path
-        
-        # Get valid neighbors of the current position
-        neighbors = maze.getNeighbors(current_pos[0], current_pos[1])
-        
-        for neighbor in neighbors:
-            new_path = current_path + [current_pos]
-            gn = len(new_path)  # g-cost is the number of steps taken
-            
-            # Calculate h-cost (hn) using the Manhattan distance to the nearest unvisited corner
-            remaining_corners = set()
-            for corner in corners:
-                if corner not in visited_corners:
-                    remaining_corners.add(corner)   # See how many corners are left
-
-            if remaining_corners:
-                nearest_corner = min(remaining_corners, key=lambda corner: abs(corner[0] - neighbor[0]) + abs(corner[1] - neighbor[1]))
-                hn = abs(neighbor[0] - nearest_corner[0]) + abs(neighbor[1] - nearest_corner[1])
-            else:
-                hn = 0  # If all corners are visited, h-cost is 0
-            
-            # Calculate f-cost (fn)
-            fn = gn + hn
-            
-            # Avoid revisiting visited positions and update cost
-            if neighbor not in visited_corners and maze.isValidMove(*neighbor):
-                astar_list.append((fn, neighbor, new_path, visited_corners))
+    # Define the heuristic function
+    def heuristic(state):
+        # Calculate the maximum Manhattan distance to an unvisited corner
+        max_distance = 0
+        for obj in objectives:
+            if (state[2] & (1 << objectives.index(obj))) == 0:
+                distance = manhattan_distance(state[:2], obj)
+                max_distance = max(max_distance, distance)
+        return max_distance
     
-    # If no path is found, return an empty list to indicate failure
+    # Initialize the priority queue with the starting state
+    priority_queue = [(heuristic((start[0], start[1], 0)), 0, start[0], start[1], 0, [])]
+    
+    # Initialize the explored set
+    explored = set()
+    
+    while priority_queue:
+        _, cost, row, col, dots_state, path = heapq.heappop(priority_queue)
+        
+        # Check if the current state is the goal state
+        if dots_state == (1 << num_objectives) - 1:
+            return path
+        
+        # Check if the current state has already been explored
+        if (row, col, dots_state) in explored:
+            continue
+        
+        # Mark the current state as explored
+        explored.add((row, col, dots_state))
+        
+        # Generate successor states
+        for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            new_row, new_col = row + dr, col + dc
+            
+            # Check if the move is valid
+            if maze.isValidMove(new_row, new_col):
+                new_dots_state = dots_state
+                
+                # Check if the new position collects a dot
+                for i, obj in enumerate(objectives):
+                    if (new_row, new_col) == obj and (dots_state & (1 << i)) == 0:
+                        new_dots_state |= (1 << i)
+                
+                # Calculate the new cost and update the priority queue
+                new_cost = cost + 1
+                new_path = path + [(new_row, new_col)]
+                new_priority = new_cost + heuristic((new_row, new_col, new_dots_state))
+                heapq.heappush(priority_queue, (new_priority, new_cost, new_row, new_col, new_dots_state, new_path))
+    
+    # If no path is found, return an empty list
     return []
-
 
 def astar_multi(maze):
     """
