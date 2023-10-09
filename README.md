@@ -3,3 +3,4 @@
 * kalman filter
 * neural networks
 * search algorithms 
+* reinforcement learning
