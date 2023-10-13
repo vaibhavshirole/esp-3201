@@ -49,7 +49,7 @@ class QLearningAgent(ReinforcementAgent):
     print(self.alpha)
     print(self.gamma)
 
-    # Create a dictionary to store Q-values
+    # Store Q-values
     self.qValues = {}
 
   
@@ -59,11 +59,10 @@ class QLearningAgent(ReinforcementAgent):
       Should return 0.0 if we never seen
       a state or (state,action) tuple 
     """
-    # Check if the state-action pair exists in the Q-values dictionary
-    if (state, action) in self.qValues:
-        return self.qValues[(state, action)]
+    if (state, action) not in self.qValues:
+        return 0.0
     else:
-        return 0.0  # Return 0.0 for unseen state-action pairs
+        return self.qValues[(state, action)]
     
   def getValue(self, state):
     """
@@ -72,31 +71,28 @@ class QLearningAgent(ReinforcementAgent):
       there are no legal actions, which is the case at the
       terminal state, you should return a value of 0.0.
     """
-    # Get the legal actions for the given state, if none, return 0.0
     legal_actions = self.getLegalActions(state)
     if not legal_actions:
         return 0.0
 
-    # Find the maximum Q-value among legal actions
+    # Find max Q-value among legal actions
     max_q_value = max(self.getQValue(state, action) for action in legal_actions)
 
     return max_q_value
     
   def getPolicy(self, state):
-
-    #print("getpolicy")
-
     """
       Compute the best action to take in a state.  Note that if there
       are no legal actions, which is the case at the terminal state,
       you should return None.
     """
-    # Get the legal actions for the given state, if it's a terminal state, return None
+    #print("getpolicy")
+    
     legal_actions = self.getLegalActions(state)
     if not legal_actions:
         return None
 
-    # Filter actions with the maximum Q-value and randomly choose best if multiple are good
+    # Get all actions with maximum Q-value and randomly choose the best
     max_q_value = self.getValue(state)
     best_actions = [action for action in legal_actions if self.getQValue(state, action) == max_q_value]
     best_action = random.choice(best_actions)
@@ -113,16 +109,14 @@ class QLearningAgent(ReinforcementAgent):
     
       HINT: You might want to use util.flipCoin(prob)
       HINT: To pick randomly from a list, use random.choice(list)
-    """  
-
+    """
     #print("getaction")
 
-    # Get the legal actions for the given state, if terminal state, return None
     legal_actions = self.getLegalActions(state)
     if not legal_actions:
         return None
 
-    # Choose a random action with probability self.epsilon, else use policy
+    # Choose a random action with probability epsilon, else use best policy action
     if util.flipCoin(self.epsilon):
         return random.choice(legal_actions)
     best_action = self.getPolicy(state)
@@ -138,17 +132,15 @@ class QLearningAgent(ReinforcementAgent):
       NOTE: You should never call this function,
       it will be called on your behalf
     """
-    
     #print("update")
 
-    # Get the current Q-value for the (state, action) pair
+    # Get the Q-value for current state 
     current_q_value = self.getQValue(state, action)
 
-    # Calculate the maximum Q-value for the next state
+    # Get the maximum Q-value for next state
     next_max_q_value = self.getValue(nextState)
 
     # Apply the Q-Learning update rule to compute the new Q-value
-    new_q_value = (1 - self.alpha) * current_q_value + self.alpha * (reward + self.gamma * next_max_q_value)
-
-    # Update the Q-value for the (state, action) pair in the Q-values dictionary
+    # new q = cur Q + alpha(reward for taking action + gamma*max expected reward - cur Q)
+    new_q_value = current_q_value + self.alpha*(reward + self.gamma * next_max_q_value - current_q_value)
     self.qValues[(state, action)] = new_q_value
