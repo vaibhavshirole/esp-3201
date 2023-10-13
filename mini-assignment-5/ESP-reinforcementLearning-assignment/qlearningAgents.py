@@ -83,6 +83,9 @@ class QLearningAgent(ReinforcementAgent):
     return max_q_value
     
   def getPolicy(self, state):
+
+    #print("getpolicy")
+
     """
       Compute the best action to take in a state.  Note that if there
       are no legal actions, which is the case at the terminal state,
@@ -113,6 +116,9 @@ class QLearningAgent(ReinforcementAgent):
       HINT: You might want to use util.flipCoin(prob)
       HINT: To pick randomly from a list, use random.choice(list)
     """  
+
+    #print("getaction")
+
     # Get the legal actions for the given state, if terminal state, return None
     legal_actions = self.getLegalActions(state)
     if not legal_actions:
@@ -135,7 +141,9 @@ class QLearningAgent(ReinforcementAgent):
       NOTE: You should never call this function,
       it will be called on your behalf
     """
-    print("hiii")
+    
+    #print("update")
+
     # Get the current Q-value for the (state, action) pair
     current_q_value = self.getQValue(state, action)
 
