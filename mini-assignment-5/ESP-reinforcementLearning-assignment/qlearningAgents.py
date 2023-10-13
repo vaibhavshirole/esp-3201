@@ -39,9 +39,9 @@ class QLearningAgent(ReinforcementAgent):
     "You can initialize Q-values here..."
     ReinforcementAgent.__init__(self, **args)
 
-    self.epsilon = args['epsilon']
-    self.alpha = args['alpha']
-    self.gamma = args['gamma']
+    self.epsilon = args['epsilon']    # exploration rate
+    self.alpha = args['alpha']        # learning rate
+    self.gamma = args['gamma']        # discount factor
     self.actionFn = args['actionFn']
 
     print("debug-init values")
@@ -64,7 +64,6 @@ class QLearningAgent(ReinforcementAgent):
         return self.qValues[(state, action)]
     else:
         return 0.0  # Return 0.0 for unseen state-action pairs
- 
     
   def getValue(self, state):
     """
@@ -94,31 +93,15 @@ class QLearningAgent(ReinforcementAgent):
     if not legal_actions:
         return None
 
-    # Initialize variables for tracking best actions and maximum Q-value
-    best_actions = []
-    max_q_value = float('-inf')
+    # Find the maximum Q-value among legal actions
+    max_q_value = self.getValue(state)
 
-    # Iterate through legal actions to find the maximum Q-value and best actions
-    for action in legal_actions:
-        q_value = self.getQValue(state, action)
-        if q_value > max_q_value:
-            max_q_value = q_value
-            best_actions = [action]
-        elif q_value == max_q_value:
-            best_actions.append(action)
-
-    # If all seen actions have negative Q-values, consider unseen actions with Q-value 0
-    if max_q_value <= 0:
-        unseen_actions = [action for action in legal_actions if self.getQValue(state, action) == 0.0]
-        if unseen_actions:
-            best_actions = unseen_actions
-
-    # Randomly select one of the best actions to break ties
+    # Filter actions with the maximum Q-value and randomly choose best if multiple are good
+    best_actions = [action for action in legal_actions if self.getQValue(state, action) == max_q_value]
     best_action = random.choice(best_actions)
 
     return best_action
-
-    
+ 
   def getAction(self, state):
     """
       Compute the action to take in the current state.  With
@@ -135,13 +118,11 @@ class QLearningAgent(ReinforcementAgent):
     if not legal_actions:
         return None
 
-    # Choose a random action with probability self.epsilon
+    # Choose a random action with probability self.epsilon, else use policy
     if util.flipCoin(self.epsilon):
         return random.choice(legal_actions)
-    
-    # Otherwise, choose the best policy action (maximum Q-value)
-    best_action = max(legal_actions, key=lambda action: self.getQValue(state, action))
-    
+    best_action = self.getPolicy(state)
+
     return best_action
 
   
@@ -154,14 +135,15 @@ class QLearningAgent(ReinforcementAgent):
       NOTE: You should never call this function,
       it will be called on your behalf
     """
-    # Calculate the Q-value for the current state-action pair
+    print("hiii")
+    # Get the current Q-value for the (state, action) pair
     current_q_value = self.getQValue(state, action)
 
-    # Find the maximum Q-value for the next state over all possible actions
-    max_next_q_value = max(self.getQValue(nextState, next_action) for next_action in self.getLegalActions(nextState))
+    # Calculate the maximum Q-value for the next state
+    next_max_q_value = self.getValue(nextState)
 
-    # Update the Q-value using the Q-learning formula
-    updated_q_value = current_q_value + self.alpha * (reward + self.gamma * max_next_q_value - current_q_value)
+    # Apply the Q-Learning update rule to compute the new Q-value
+    new_q_value = (1 - self.alpha) * current_q_value + self.alpha * (reward + self.gamma * next_max_q_value)
 
-    # Update the Q-value in the Q-values dictionary
-    self.qValues[(state, action)] = updated_q_value
+    # Update the Q-value for the (state, action) pair in the Q-values dictionary
+    self.qValues[(state, action)] = new_q_value
