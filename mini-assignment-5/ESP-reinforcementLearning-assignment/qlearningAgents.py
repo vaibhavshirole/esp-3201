@@ -96,10 +96,8 @@ class QLearningAgent(ReinforcementAgent):
     if not legal_actions:
         return None
 
-    # Find the maximum Q-value among legal actions
-    max_q_value = self.getValue(state)
-
     # Filter actions with the maximum Q-value and randomly choose best if multiple are good
+    max_q_value = self.getValue(state)
     best_actions = [action for action in legal_actions if self.getQValue(state, action) == max_q_value]
     best_action = random.choice(best_actions)
 
@@ -130,8 +128,7 @@ class QLearningAgent(ReinforcementAgent):
     best_action = self.getPolicy(state)
 
     return best_action
-
-  
+ 
   def update(self, state, action, nextState, reward):
     """
       The parent class calls this to observe a 
