@@ -36,17 +36,27 @@ class ValueIterationAgent(ValueEstimationAgent):
     self.iterations = iterations
     self.values = util.Counter() # A Counter is a dict with default 0
      
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
-    
+    for _ in range(iterations):
+        newValues = util.Counter()  # Create a new Counter for updated values
+        for state in mdp.getStates():
+            if not mdp.isTerminal(state):
+                # Calculate Q-value for each possible action
+                action_values = []
+                for action in mdp.getPossibleActions(state):
+                    q_value = sum(
+                        prob * (mdp.getReward(state, action, next_state) + discount * self.values[next_state])
+                        for next_state, prob in mdp.getTransitionStatesAndProbs(state, action)
+                    )
+                    action_values.append(q_value)
+                # Update the value of the state to the maximum Q-value
+                newValues[state] = max(action_values)
+        self.values = newValues  # Update values with the newly calculated values
 
   def getValue(self, state):
     """
       Return the value of the state (computed in __init__).
     """
     return self.values[state]
-
 
   def getQValue(self, state, action):
     """
@@ -56,10 +66,17 @@ class ValueIterationAgent(ValueEstimationAgent):
       necessarily create this quantity and you may have
       to derive it on the fly.
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Check if the state is a terminal state; Q-value is 0 for terminal states
+    if self.mdp.isTerminal(state):
+        return 0.0
 
+    # Calculate the Q-value using the Bellman equation
+    q_value = sum(
+        prob * (self.mdp.getReward(state, action, next_state) + self.discount * self.values[next_state])
+        for next_state, prob in self.mdp.getTransitionStatesAndProbs(state, action)
+    )
 
+    return q_value
 
   def getPolicy(self, state):
     """
@@ -69,9 +86,22 @@ class ValueIterationAgent(ValueEstimationAgent):
       there are no legal actions, which is the case at the
       terminal state, you should return None.
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Check if the state is a terminal state; return None if it is
+    if self.mdp.isTerminal(state):
+        return None
 
+    # Get the legal actions for the given state
+    legal_actions = self.mdp.getPossibleActions(state)
+
+    if not legal_actions:
+        return None  # No legal actions, return None
+
+    # Filter actions with the maximum Q-value and randomly choose best if multiple are good
+    max_q_value = self.getValue(state)
+    best_actions = [action for action in legal_actions if self.getQValue(state, action) == max_q_value]
+    best_action = random.choice(best_actions)
+
+    return best_action
 
   def getAction(self, state):
     "Returns the policy at the state (no exploration)."
