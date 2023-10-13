@@ -68,10 +68,8 @@ class QLearningAgent(ReinforcementAgent):
       there are no legal actions, which is the case at the
       terminal state, you should return a value of 0.0.
     """
-    # Get the legal actions for the given state
+    # Get the legal actions for the given state, if none, return 0.0
     legal_actions = self.getLegalActions(state)
-
-    # If there are no legal actions, return 0.0
     if not legal_actions:
         return 0.0
 
@@ -86,14 +84,12 @@ class QLearningAgent(ReinforcementAgent):
       are no legal actions, which is the case at the terminal state,
       you should return None.
     """
-    # Get the legal actions for the given state
+    # Get the legal actions for the given state, if terminal state, return None
     legal_actions = self.getLegalActions(state)
-
-    # If there are no legal actions, return None (terminal state)
     if not legal_actions:
         return None
 
-    # Find the action with the maximum Q-value
+    # Of actions in legal_actions, find action with highest Q-value at current state
     best_action = max(legal_actions, key=lambda action: self.getQValue(state, action))
 
     return best_action
@@ -110,10 +106,8 @@ class QLearningAgent(ReinforcementAgent):
       HINT: You might want to use util.flipCoin(prob)
       HINT: To pick randomly from a list, use random.choice(list)
     """  
-    # Get the legal actions for the given state
+    # Get the legal actions for the given state, if terminal state, return None
     legal_actions = self.getLegalActions(state)
-
-    # If there are no legal actions, return None (terminal state)
     if not legal_actions:
         return None
 
