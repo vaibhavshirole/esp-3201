@@ -44,6 +44,11 @@ class QLearningAgent(ReinforcementAgent):
     self.gamma = args['gamma']
     self.actionFn = args['actionFn']
 
+    print("debug-init values")
+    print(self.epsilon)
+    print(self.alpha)
+    print(self.gamma)
+
     # Create a dictionary to store Q-values
     self.qValues = {}
 
@@ -84,13 +89,32 @@ class QLearningAgent(ReinforcementAgent):
       are no legal actions, which is the case at the terminal state,
       you should return None.
     """
-    # Get the legal actions for the given state, if terminal state, return None
+    # Get the legal actions for the given state, if it's a terminal state, return None
     legal_actions = self.getLegalActions(state)
     if not legal_actions:
         return None
 
-    # Of actions in legal_actions, find action with highest Q-value at current state
-    best_action = max(legal_actions, key=lambda action: self.getQValue(state, action))
+    # Initialize variables for tracking best actions and maximum Q-value
+    best_actions = []
+    max_q_value = float('-inf')
+
+    # Iterate through legal actions to find the maximum Q-value and best actions
+    for action in legal_actions:
+        q_value = self.getQValue(state, action)
+        if q_value > max_q_value:
+            max_q_value = q_value
+            best_actions = [action]
+        elif q_value == max_q_value:
+            best_actions.append(action)
+
+    # If all seen actions have negative Q-values, consider unseen actions with Q-value 0
+    if max_q_value <= 0:
+        unseen_actions = [action for action in legal_actions if self.getQValue(state, action) == 0.0]
+        if unseen_actions:
+            best_actions = unseen_actions
+
+    # Randomly select one of the best actions to break ties
+    best_action = random.choice(best_actions)
 
     return best_action
 
