@@ -10,7 +10,7 @@ from game import *
 from learningAgents import ReinforcementAgent
 
 import random,util,math
-          
+
 class QLearningAgent(ReinforcementAgent):
   """
     Q-Learning Agent
@@ -43,6 +43,8 @@ class QLearningAgent(ReinforcementAgent):
     self.alpha = args['alpha']        # learning rate
     self.gamma = args['gamma']        # discount factor
     self.actionFn = args['actionFn']
+
+    self.epsilon = 0.7
 
     print("debug-init values")
     print(self.epsilon)
