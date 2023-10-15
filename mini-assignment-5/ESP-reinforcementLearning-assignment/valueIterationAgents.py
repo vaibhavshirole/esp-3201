@@ -35,21 +35,19 @@ class ValueIterationAgent(ValueEstimationAgent):
     self.discount = discount
     self.iterations = iterations
     self.values = util.Counter() # A Counter is a dict with default 0
-     
+  
+    #print(iterations)
+
     iteration = 0
     while iteration < iterations:
         for state in mdp.getStates():
             if not mdp.isTerminal(state):
                 action_values = []
                 for action in mdp.getPossibleActions(state):
-                    q_value = sum(
-                        prob * (mdp.getReward(state, action, next_state) + discount * self.values[next_state])
-                        for next_state, prob in mdp.getTransitionStatesAndProbs(state, action)
-                    )
-                    action_values.append(q_value)
-
+                    action_values.append(self.getQValue(state,action))
                 self.values[state] = max(action_values)
         iteration += 1
+        #print(self.values)
 
   def getValue(self, state):
     """
@@ -93,10 +91,14 @@ class ValueIterationAgent(ValueEstimationAgent):
 
     # Filter actions with the maximum Q-value and randomly choose best if multiple are good
     max_q_value = self.getValue(state)
+    #print("valid actions: " + str(legal_actions))
+    #print("max_q_value: " + str(max_q_value))
     best_actions = [action for action in legal_actions if self.getQValue(state, action) == max_q_value]
-    best_action = random.choice(best_actions)
-
-    return best_action
+    if best_actions:
+      best_action = random.choice(best_actions)
+      return best_action
+    else:
+        return random.choice(legal_actions)  # Choose a random valid action if there are no best actions
 
   def getAction(self, state):
     "Returns the policy at the state (no exploration)."
