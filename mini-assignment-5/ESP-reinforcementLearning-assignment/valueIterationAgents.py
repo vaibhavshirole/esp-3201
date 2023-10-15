@@ -36,11 +36,10 @@ class ValueIterationAgent(ValueEstimationAgent):
     self.iterations = iterations
     self.values = util.Counter() # A Counter is a dict with default 0
      
-    for _ in range(iterations):
-        newValues = util.Counter()  # Create a new Counter for updated values
+    iteration = 0
+    while iteration < iterations:
         for state in mdp.getStates():
             if not mdp.isTerminal(state):
-                # Calculate Q-value for each possible action
                 action_values = []
                 for action in mdp.getPossibleActions(state):
                     q_value = sum(
@@ -48,9 +47,9 @@ class ValueIterationAgent(ValueEstimationAgent):
                         for next_state, prob in mdp.getTransitionStatesAndProbs(state, action)
                     )
                     action_values.append(q_value)
-                # Update the value of the state to the maximum Q-value
-                newValues[state] = max(action_values)
-        self.values = newValues  # Update values with the newly calculated values
+
+                self.values[state] = max(action_values)
+        iteration += 1
 
   def getValue(self, state):
     """
@@ -66,7 +65,6 @@ class ValueIterationAgent(ValueEstimationAgent):
       necessarily create this quantity and you may have
       to derive it on the fly.
     """
-    # Check if the state is a terminal state; Q-value is 0 for terminal states
     if self.mdp.isTerminal(state):
         return 0.0
 
@@ -86,13 +84,10 @@ class ValueIterationAgent(ValueEstimationAgent):
       there are no legal actions, which is the case at the
       terminal state, you should return None.
     """
-    # Check if the state is a terminal state; return None if it is
     if self.mdp.isTerminal(state):
         return None
-
-    # Get the legal actions for the given state
+    
     legal_actions = self.mdp.getPossibleActions(state)
-
     if not legal_actions:
         return None  # No legal actions, return None
 
